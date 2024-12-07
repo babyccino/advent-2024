@@ -27,6 +27,41 @@ const (
 	CurrentPos        = 0b10000000
 )
 
+func getBoard() (Board, Position) {
+	file, err := os.Open("./input.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	board := make(Board, 0)
+	y := 0
+	var startingX, startingY int
+	for scanner.Scan() {
+		text := scanner.Text()
+		app := make(Row, len(text))
+		for x, char := range text {
+			if char == '#' {
+				app[x] = Blocked
+			} else if char == '^' {
+				app[x] = Up | Visited
+				startingX = x
+				startingY = y
+			}
+		}
+		board = append(board, app)
+		y += 1
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return board, Position{startingX, startingY - 1}
+}
+
 func directionToVec(dir State) (int, int) {
 	if dir == Up {
 		return -1, 0
@@ -125,42 +160,9 @@ func traverse(board Board, pos Position, state State, total int) int {
 }
 
 func main() {
-	file, err := os.Open("./input.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	board := make(Board, 0)
-	y := 0
-	var startingX, startingY int
-	for scanner.Scan() {
-		text := scanner.Text()
-		app := make(Row, len(text))
-		for x, char := range text {
-			if char == '#' {
-				app[x] = Blocked
-			} else if char == '^' {
-				app[x] = Up | Visited
-				startingX = x
-				startingY = y
-			}
-		}
-		board = append(board, app)
-		y += 1
-	}
-
-	fmt.Printf("starting x: %d, starting y: %d\n\n", startingX, startingY)
-
-	pos := Position{x: startingX, y: startingY - 1}
+	board, pos := getBoard()
 	total := traverse(board, pos, Up, 1)
 	fmt.Printf("total: %d\n\n", total)
 
 	printBoard(board)
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
 }
