@@ -43,17 +43,12 @@ func isSafeArr(arr []int, remove bool) bool {
 
 			newArr := removeOne(arr, i)
 			newRes := isSafeArr(newArr, false)
-			// fmt.Printf("problem children %d %d\n", el, before)
-			// fmt.Printf("trying with %v\n", newArr)
-			// fmt.Printf("res:%t\n", newRes)
 			if newRes {
 				return newRes
 			}
 
 			newArr = removeOne(arr, i-1)
 			newRes = isSafeArr(newArr, false)
-			// fmt.Printf("trying with %v\n", newArr)
-			// fmt.Printf("res:%t\n", newRes)
 			return newRes
 		}
 	}
