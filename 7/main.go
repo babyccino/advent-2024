@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"slices"
 	"strconv"
 )
 
@@ -60,6 +61,7 @@ func getInput() []Equation {
 			}
 			args[i] = arg
 		}
+		slices.Reverse(args)
 
 		eq := Equation{ans, args, text}
 		// println(eq.ans)
@@ -74,23 +76,32 @@ func getInput() []Equation {
 }
 
 func perms(eq Equation) int {
-	return _perms(eq.args, eq.ans, 0)
+	return _perms(eq.args, eq.ans)
 }
-func _perms(args []int, total int, running int) int {
-	if running > total {
+func _perms(args []int, looking int) int {
+	if len(args) == 0 {
 		return 0
 	}
-	if len(args) == 0 {
-		if running == total {
+
+	arg := args[0]
+
+	if len(args) == 1 {
+		if looking == arg {
 			return 1
 		} else {
 			return 0
 		}
 	}
 
-	arg := args[0]
-	slice := args[1:]
-	return _perms(slice, total, running+arg) + _perms(slice, total, running*arg)
+	total := 0
+	if looking-arg > 0 {
+		total += _perms(args[1:], looking-arg)
+	}
+	if looking%arg == 0 {
+		total += _perms(args[1:], looking/arg)
+	}
+
+	return total
 }
 
 func p1() {
@@ -98,8 +109,8 @@ func p1() {
 	total := 0
 	for _, eq := range arr {
 		res := perms(eq)
-		fmt.Printf("str %s gives %d\n", eq.original, res)
 		if res > 0 {
+			fmt.Printf("str %s gives %d\n", eq.original, res)
 			total += eq.ans
 		}
 	}
