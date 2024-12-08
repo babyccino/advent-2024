@@ -1,4 +1,4 @@
-package main
+package advent7
 
 import (
 	"bufio"
@@ -106,7 +106,7 @@ func _perms1(args []int, looking int) int {
 	return total
 }
 
-func p1() {
+func P1() {
 	arr := getInput()
 	total := 0
 	for _, eq := range arr {
@@ -119,7 +119,7 @@ func p1() {
 	fmt.Printf("\ntotal: %d\n", total)
 }
 
-// p2
+// P2
 
 func diff(str1, str2 string) string {
 	diff := len(str1) - len(str2)
@@ -172,7 +172,7 @@ func _perms(args []int, looking int) bool {
 
 const debug = false
 
-func p2() {
+func P2() {
 	arr := getInput()
 	total := 0
 	for _, eq := range arr {
@@ -188,5 +188,5 @@ func p2() {
 }
 
 func main() {
-	p2()
+	P2()
 }

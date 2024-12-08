@@ -1,47 +1,31 @@
-package main
+package advent8
 
 import (
 	"bufio"
 	"fmt"
 	"log"
 	"os"
+
+	"advent/position"
 )
 
-type Position struct {
-	x int
-	y int
-}
-
-func (pos *Position) print() {
-	fmt.Printf("Position{x: %d, y: %d}\n", pos.x, pos.y)
-}
-func (pos *Position) add(other Position) Position {
-	return Position{pos.x + other.x, pos.y + other.y}
-}
-func (pos *Position) addMult(other Position, mult int) Position {
-	return Position{pos.x + mult*other.x, pos.y + mult*other.y}
-}
-func (pos *Position) diff(other Position) Position {
-	return pos.addMult(other, -1)
-}
-
-type Row = []Position
+type Row = []position.Position
 type Map = map[rune]Row
 
 const useLarge = true
 
-func getInput() (Map, Position, Hash, [][]byte) {
+func getInput() (Map, position.Position, Hash, [][]byte) {
 	var file *os.File
 	defer file.Close()
 
 	if useLarge {
-		openFile, err := os.Open("./large.txt")
+		openFile, err := os.Open("./advent8/large.txt")
 		if err != nil {
 			log.Fatal(err)
 		}
 		file = openFile
 	} else {
-		openFile, err := os.Open("./small.txt")
+		openFile, err := os.Open("./advent8/small.txt")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -70,7 +54,7 @@ func getInput() (Map, Position, Hash, [][]byte) {
 				arr = make(Row, 0)
 			}
 
-			pos := Position{x, y}
+			pos := position.Position{X: x, Y: y}
 			all[pos] = Taken
 			arr = append(arr, pos)
 			res[char] = arr
@@ -81,32 +65,32 @@ func getInput() (Map, Position, Hash, [][]byte) {
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
-	return res, Position{xLen, y}, all, original
+	return res, position.Position{X: xLen, Y: y}, all, original
 }
 
 type State = byte
 
 const Taken State = 0
 
-type Hash = map[Position]State
+type Hash = map[position.Position]State
 
-func anti(pos1 Position, pos2 Position, max *Position) (*Position, *Position) {
-	deltaX := pos2.x - pos1.x
-	deltaY := pos2.y - pos1.y
+func anti(pos1 position.Position, pos2 position.Position, max *position.Position) (*position.Position, *position.Position) {
+	deltaX := pos2.X - pos1.X
+	deltaY := pos2.Y - pos1.Y
 
-	var ret1 *Position
-	var ret2 *Position
+	var ret1 *position.Position
+	var ret2 *position.Position
 
-	x := pos1.x - deltaX
-	y := pos1.y - deltaY
-	if x < max.x && y < max.y && x >= 0 && y >= 0 {
-		ret1 = &Position{x, y}
+	x := pos1.X - deltaX
+	y := pos1.Y - deltaY
+	if x < max.X && y < max.Y && x >= 0 && y >= 0 {
+		ret1 = &position.Position{X: x, Y: y}
 	}
 
-	x = pos2.x + deltaX
-	y = pos2.y + deltaY
-	if x < max.x && y < max.y && x >= 0 && y >= 0 {
-		ret2 = &Position{x, y}
+	x = pos2.X + deltaX
+	y = pos2.Y + deltaY
+	if x < max.X && y < max.Y && x >= 0 && y >= 0 {
+		ret2 = &position.Position{X: x, Y: y}
 	}
 
 	return ret1, ret2
@@ -114,7 +98,7 @@ func anti(pos1 Position, pos2 Position, max *Position) (*Position, *Position) {
 
 var Empty struct{}
 
-func check2(hash Hash, arr Row, state State, max *Position) {
+func check2(hash Hash, arr Row, state State, max *position.Position) {
 	if len(arr) < 2 {
 		return
 	}
@@ -125,14 +109,14 @@ func check2(hash Hash, arr Row, state State, max *Position) {
 		anti1, anti2 := anti(pos1, pos2, max)
 
 		if anti1 != nil {
-			anti1.print()
+			anti1.Print()
 			_, found := hash[*anti1]
 			if !found {
 				hash[*anti1] = state
 			}
 		}
 		if anti2 != nil {
-			anti2.print()
+			anti2.Print()
 			_, found := hash[*anti2]
 			if !found {
 				hash[*anti2] = state
@@ -145,7 +129,7 @@ func check2(hash Hash, arr Row, state State, max *Position) {
 	check2(hash, rest, state, max)
 }
 
-func p1() {
+func P1() {
 	res, max, hash, original := getInput()
 	for state, row := range res {
 		check2(hash, row, byte(state), &max)
@@ -153,7 +137,7 @@ func p1() {
 
 	for pos, state := range hash {
 		if state != Taken {
-			original[pos.y][pos.x] = '#'
+			original[pos.Y][pos.X] = '#'
 		}
 	}
 
@@ -172,33 +156,33 @@ func p1() {
 }
 
 func testAnti() {
-	max := Position{10, 10}
-	anti1, anti2 := anti(Position{0, 0}, Position{1, 2}, &max)
+	max := position.Position{X: 10, Y: 10}
+	anti1, anti2 := anti(position.Position{X: 0, Y: 0}, position.Position{X: 1, Y: 2}, &max)
 
 	if anti1 == nil {
 		println("no anti1")
 	} else {
-		fmt.Printf("x1, y1: %d, %d\n", anti1.x, anti1.y)
+		fmt.Printf("x1, y1: %d, %d\n", anti1.X, anti1.Y)
 	}
 
 	if anti2 == nil {
 		println("no anti2")
 	} else {
-		fmt.Printf("x2, y2: %d, %d\n", anti2.x, anti2.y)
+		fmt.Printf("x2, y2: %d, %d\n", anti2.X, anti2.Y)
 	}
 }
 
-// p2
+// P2
 
-func antiMult(pos1 Position, pos2 Position, max *Position) []Position {
-	diff := pos2.diff(pos1)
+func antiMult(pos1 position.Position, pos2 position.Position, max *position.Position) []position.Position {
+	diff := pos2.Diff(pos1)
 
-	ret := make([]Position, 0)
+	ret := make([]position.Position, 0)
 
 	mult := 1
 	for {
-		newPos := pos2.addMult(diff, mult)
-		if newPos.x < max.x && newPos.y < max.y && newPos.x >= 0 && newPos.y >= 0 {
+		newPos := pos2.AddMult(diff, mult)
+		if newPos.X < max.X && newPos.Y < max.Y && newPos.X >= 0 && newPos.Y >= 0 {
 			ret = append(ret, newPos)
 		} else {
 			break
@@ -208,8 +192,8 @@ func antiMult(pos1 Position, pos2 Position, max *Position) []Position {
 
 	mult = -1
 	for {
-		newPos := pos1.addMult(diff, mult)
-		if newPos.x < max.x && newPos.y < max.y && newPos.x >= 0 && newPos.y >= 0 {
+		newPos := pos1.AddMult(diff, mult)
+		if newPos.X < max.X && newPos.Y < max.Y && newPos.X >= 0 && newPos.Y >= 0 {
 			ret = append(ret, newPos)
 		} else {
 			break
@@ -220,7 +204,7 @@ func antiMult(pos1 Position, pos2 Position, max *Position) []Position {
 	return ret
 }
 
-func check(hash Hash, arr Row, state State, max *Position) {
+func check(hash Hash, arr Row, state State, max *position.Position) {
 	if len(arr) < 2 {
 		return
 	}
@@ -241,7 +225,7 @@ func check(hash Hash, arr Row, state State, max *Position) {
 	check(hash, rest, state, max)
 }
 
-func p2() {
+func P2() {
 	res, max, hash, original := getInput()
 	for state, row := range res {
 		check(hash, row, byte(state), &max)
@@ -249,7 +233,7 @@ func p2() {
 
 	for pos, state := range hash {
 		if state != Taken {
-			original[pos.y][pos.x] = '#'
+			original[pos.Y][pos.X] = '#'
 		}
 	}
 
@@ -259,8 +243,4 @@ func p2() {
 
 	total := len(hash)
 	fmt.Printf("total %d\n", total)
-}
-
-func main() {
-	p2()
 }

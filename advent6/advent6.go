@@ -1,6 +1,7 @@
-package main
+package advent6
 
 import (
+	"advent/position"
 	"bufio"
 	"fmt"
 	"log"
@@ -8,10 +9,6 @@ import (
 )
 
 type State uint
-type Position struct {
-	x int
-	y int
-}
 type Row = []State
 type Board = []Row
 
@@ -37,7 +34,7 @@ func turn(state State) State {
 	}
 }
 
-func getBoard() (Board, Position) {
+func getBoard() (Board, position.Position) {
 	file, err := os.Open("./input.txt")
 	if err != nil {
 		log.Fatal(err)
@@ -68,7 +65,7 @@ func getBoard() (Board, Position) {
 		log.Fatal(err)
 	}
 
-	return board, Position{startingX, startingY}
+	return board, position.Position{X: startingX, Y: startingY}
 }
 
 func copyBoard(board Board) Board {
@@ -96,10 +93,10 @@ func directionToVec(dir State) (int, int) {
 	panic("ahhhh")
 }
 
-func move(pos Position, dir State) Position {
+func move(pos position.Position, dir State) position.Position {
 	moveY, moveX := directionToVec(dir)
-	pos.x += moveX
-	pos.y += moveY
+	pos.X += moveX
+	pos.Y += moveY
 	return pos
 }
 
@@ -113,15 +110,15 @@ func assignState(state, assign State) State {
 	return state | assign
 }
 
-func printBoard(board Board, pos Position) {
+func printBoard(board Board, pos position.Position) {
 	_printBoard(board, pos)
 }
-func debugPrintBoard(board Board, pos Position) {
+func debugPrintBoard(board Board, pos position.Position) {
 	// _printBoard(board)
 }
-func _printBoard(board Board, pos Position) {
-	oldState := board[pos.y][pos.x]
-	board[pos.y][pos.x] = CurrentPos
+func _printBoard(board Board, pos position.Position) {
+	oldState := board[pos.Y][pos.X]
+	board[pos.Y][pos.X] = CurrentPos
 
 	for _, line := range board {
 		arr := make([]byte, len(line))
@@ -142,31 +139,31 @@ func _printBoard(board Board, pos Position) {
 	}
 	println("")
 
-	board[pos.y][pos.x] = oldState
+	board[pos.Y][pos.X] = oldState
 }
 
-func checkVec(lines Board, pos Position, dir State) State {
+func checkVec(lines Board, pos position.Position, dir State) State {
 	pos = move(pos, dir)
-	if pos.y < 0 || pos.x < 0 || pos.y >= len(lines) || pos.x >= len(lines[0]) {
+	if pos.Y < 0 || pos.X < 0 || pos.Y >= len(lines) || pos.X >= len(lines[0]) {
 		return OutOfBounds
 	}
-	return lines[pos.y][pos.x]
+	return lines[pos.Y][pos.X]
 }
 
-// p1
+// P1
 
-func traverse(board Board, pos Position, direction State, total int) int {
-	boardState := board[pos.y][pos.x]
+func traverse(board Board, pos position.Position, direction State, total int) int {
+	boardState := board[pos.Y][pos.X]
 	if hasState(boardState, Visited) {
 		total += 1
-		board[pos.y][pos.x] = assignState(boardState, Visited)
+		board[pos.Y][pos.X] = assignState(boardState, Visited)
 	}
 	// current position has been visited facing current direction
 	if hasState(boardState, direction) {
 		return total
 	}
 	// current position has now been visited facing current direction
-	board[pos.y][pos.x] = assignState(boardState, direction)
+	board[pos.Y][pos.X] = assignState(boardState, direction)
 
 	nextState := checkVec(board, pos, direction)
 	if hasState(nextState, OutOfBounds) {
@@ -181,43 +178,43 @@ func traverse(board Board, pos Position, direction State, total int) int {
 	return traverse(board, move(pos, direction), direction, total)
 }
 
-func p1() {
+func P1() {
 	board, initialPos := getBoard()
 	total := traverse(board, initialPos, Up, 0)
 	printBoard(board, initialPos)
 	fmt.Printf("total positions visited: %d", total)
 }
 
-// p2
+// P2
 
-func getVisited(board Board, initialPosition Position) []Position {
-	ret := make([]Position, 0)
+func getVisited(board Board, initialPosition position.Position) []position.Position {
+	ret := make([]position.Position, 0)
 	for y, line := range board {
 		for x, char := range line {
-			if initialPosition.x == y && initialPosition.y == x {
+			if initialPosition.X == y && initialPosition.Y == x {
 				continue
 			}
 			if Visited&char == Visited {
-				ret = append(ret, Position{x, y})
+				ret = append(ret, position.Position{X: x, Y: y})
 			}
 		}
 	}
 	return ret
 }
 
-func detectCycle(board Board, pos Position, direction State) bool {
-	boardState := board[pos.y][pos.x]
+func detectCycle(board Board, pos position.Position, direction State) bool {
+	boardState := board[pos.Y][pos.X]
 	if doesntHaveState(boardState, Visited) {
-		board[pos.y][pos.x] = assignState(boardState, Visited)
+		board[pos.Y][pos.X] = assignState(boardState, Visited)
 	}
 	// current position has been visited facing current direction
 	if hasState(boardState, direction) {
 		return true
 	}
 	// current position has now been visited facing current direction
-	board[pos.y][pos.x] = assignState(boardState, direction)
+	board[pos.Y][pos.X] = assignState(boardState, direction)
 
-	// loop to handle corners (didn't matter in p1 apparently)
+	// loop to handle corners (didn't matter in P1 apparently)
 	for {
 		nextState := checkVec(board, pos, direction)
 		if hasState(nextState, OutOfBounds) {
@@ -242,11 +239,11 @@ func testCycle() {
 	fmt.Printf("[test] had cycle: %t", cycle)
 }
 
-func p2() {
+func P2() {
 	initialBoard, initialPos := getBoard()
 
 	// it's only worth trying new obstructions on coords which have been visited
-	var visited []Position
+	var visited []position.Position
 	{
 		board := copyBoard(initialBoard)
 		total := traverse(board, initialPos, Up, 0)
@@ -261,7 +258,7 @@ func p2() {
 
 	for _, pos := range visited {
 		newBoard := copyBoard(initialBoard)
-		newBoard[pos.y][pos.x] = AddedBlocked
+		newBoard[pos.Y][pos.X] = AddedBlocked
 
 		var boardPrint Board
 		if shouldPrintBoard {
@@ -282,5 +279,5 @@ func p2() {
 }
 
 func main() {
-	p2()
+	P2()
 }
