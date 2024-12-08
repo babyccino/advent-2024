@@ -75,6 +75,66 @@ func getInput() []Equation {
 	return arr
 }
 
+// p1
+
+func perms1(eq Equation) int {
+	return _perms1(eq.args, eq.ans)
+}
+func _perms1(args []int, looking int) int {
+	if len(args) == 0 {
+		return 0
+	}
+
+	arg := args[0]
+
+	if len(args) == 1 {
+		if looking == arg {
+			return 1
+		} else {
+			return 0
+		}
+	}
+
+	total := 0
+	if looking-arg > 0 {
+		total += _perms1(args[1:], looking-arg)
+	}
+	if looking%arg == 0 {
+		total += _perms1(args[1:], looking/arg)
+	}
+
+	return total
+}
+
+func p1() {
+	arr := getInput()
+	total := 0
+	for _, eq := range arr {
+		res := perms1(eq)
+		if res > 0 {
+			fmt.Printf("str %s gives %d\n", eq.original, res)
+			total += eq.ans
+		}
+	}
+	fmt.Printf("\ntotal: %d\n", total)
+}
+
+// p2
+
+func numToStr(num int) string {
+	return strconv.Itoa(num)
+}
+
+func diff(str1, str2 string) *string {
+	diff := len(str1) - len(str2)
+	if diff <= 0 || str1[diff:] != str2 {
+		return nil
+	}
+
+	str := str1[:diff]
+	return &str
+}
+
 func perms(eq Equation) int {
 	return _perms(eq.args, eq.ans)
 }
@@ -101,10 +161,21 @@ func _perms(args []int, looking int) int {
 		total += _perms(args[1:], looking/arg)
 	}
 
+	lookingStr := numToStr(looking)
+	argStr := numToStr(arg)
+	strDiff := diff(lookingStr, argStr)
+	if strDiff != nil {
+		parsed, err := strconv.Atoi(*strDiff)
+		if err != nil {
+			panic("ahhhhh")
+		}
+		total += _perms(args[1:], parsed)
+	}
+
 	return total
 }
 
-func p1() {
+func p2() {
 	arr := getInput()
 	total := 0
 	for _, eq := range arr {
@@ -118,5 +189,5 @@ func p1() {
 }
 
 func main() {
-	p1()
+	p2()
 }
