@@ -121,67 +121,66 @@ func p1() {
 
 // p2
 
-func numToStr(num int) string {
-	return strconv.Itoa(num)
-}
-
-func diff(str1, str2 string) *string {
+func diff(str1, str2 string) string {
 	diff := len(str1) - len(str2)
-	if diff <= 0 || str1[diff:] != str2 {
-		return nil
+	if diff < 1 || str1[diff:] != str2 {
+		return ""
 	}
-
-	str := str1[:diff]
-	return &str
+	return str1[:diff]
 }
 
-func perms(eq Equation) int {
+func perms(eq Equation) bool {
 	return _perms(eq.args, eq.ans)
 }
-func _perms(args []int, looking int) int {
+func _perms(args []int, looking int) bool {
 	if len(args) == 0 {
-		return 0
+		return false
 	}
 
 	arg := args[0]
 
 	if len(args) == 1 {
 		if looking == arg {
-			return 1
+			return true
 		} else {
-			return 0
+			return false
 		}
 	}
 
-	total := 0
-	if looking-arg > 0 {
-		total += _perms(args[1:], looking-arg)
+	if looking-arg > 0 && _perms(args[1:], looking-arg) {
+		return true
 	}
-	if looking%arg == 0 {
-		total += _perms(args[1:], looking/arg)
+	if looking%arg == 0 && _perms(args[1:], looking/arg) {
+		return true
 	}
 
-	lookingStr := numToStr(looking)
-	argStr := numToStr(arg)
+	lookingStr := strconv.Itoa(looking)
+	argStr := strconv.Itoa(arg)
 	strDiff := diff(lookingStr, argStr)
-	if strDiff != nil {
-		parsed, err := strconv.Atoi(*strDiff)
+	if strDiff != "" {
+		parsed, err := strconv.Atoi(strDiff)
 		if err != nil {
-			panic("ahhhhh")
+			panic("str conversion to int failed somehow?")
 		}
-		total += _perms(args[1:], parsed)
+		if _perms(args[1:], parsed) {
+			return true
+		}
 	}
 
-	return total
+	return false
 }
+
+const debug = false
 
 func p2() {
 	arr := getInput()
 	total := 0
 	for _, eq := range arr {
 		res := perms(eq)
-		if res > 0 {
-			fmt.Printf("str %s gives %d\n", eq.original, res)
+		if res {
+			if debug {
+				fmt.Printf("str %s gives %t\n", eq.original, res)
+			}
 			total += eq.ans
 		}
 	}
