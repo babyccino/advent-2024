@@ -103,6 +103,16 @@ func move(pos Position, dir State) Position {
 	return pos
 }
 
+func hasState(state1, state2 State) bool {
+	return state1&state2 == state1
+}
+func doesntHaveState(state1, state2 State) bool {
+	return state1&state2 == 0b0
+}
+func assignState(state, assign State) State {
+	return state | assign
+}
+
 func printBoard(board Board, pos Position) {
 	_printBoard(board, pos)
 }
@@ -143,38 +153,32 @@ func checkVec(lines Board, pos Position, dir State) State {
 	return lines[pos.y][pos.x]
 }
 
-var limit = 1000000
-
 // p1
 
-func traverse(board Board, pos Position, state State, total int) int {
-	limit -= 1
-	if limit == 0 {
-		return total
-	}
+func traverse(board Board, pos Position, direction State, total int) int {
 	boardState := board[pos.y][pos.x]
-	if (boardState & Visited) == Clear {
+	if hasState(boardState, Visited) {
 		total += 1
-		board[pos.y][pos.x] |= Visited
+		board[pos.y][pos.x] = assignState(boardState, Visited)
 	}
 	// current position has been visited facing current direction
-	if boardState&state == state {
+	if hasState(boardState, direction) {
 		return total
 	}
 	// current position has now been visited facing current direction
-	board[pos.y][pos.x] |= state
+	board[pos.y][pos.x] = assignState(boardState, direction)
 
-	nextState := checkVec(board, pos, state)
-	if nextState&OutOfBounds == OutOfBounds {
+	nextState := checkVec(board, pos, direction)
+	if hasState(nextState, OutOfBounds) {
 		return total
 	}
-	if nextState&Blocked == Blocked {
-		state = turn(state)
+	if hasState(nextState, Blocked) {
+		direction = turn(direction)
 	}
 
 	debugPrintBoard(board, pos)
 
-	return traverse(board, move(pos, state), state, total)
+	return traverse(board, move(pos, direction), direction, total)
 }
 
 func p1() {
@@ -201,34 +205,34 @@ func getVisited(board Board, initialPosition Position) []Position {
 	return ret
 }
 
-func detectCycle(board Board, pos Position, state State) bool {
+func detectCycle(board Board, pos Position, direction State) bool {
 	boardState := board[pos.y][pos.x]
-	if boardState&Visited == Clear {
-		board[pos.y][pos.x] |= Visited
+	if doesntHaveState(boardState, Visited) {
+		board[pos.y][pos.x] = assignState(boardState, Visited)
 	}
 	// current position has been visited facing current direction
-	if boardState&state == state {
+	if hasState(boardState, direction) {
 		return true
 	}
 	// current position has now been visited facing current direction
-	board[pos.y][pos.x] |= state
+	board[pos.y][pos.x] = assignState(boardState, direction)
 
 	// loop to handle corners (didn't matter in p1 apparently)
 	for {
-		nextState := checkVec(board, pos, state)
-		if nextState&OutOfBounds == OutOfBounds {
+		nextState := checkVec(board, pos, direction)
+		if hasState(nextState, OutOfBounds) {
 			return false
 		}
-		if nextState&Blocked != Blocked {
+		if doesntHaveState(nextState, Blocked) {
 			break
 		}
 
-		state = turn(state)
+		direction = turn(direction)
 	}
 
 	debugPrintBoard(board, pos)
 
-	return detectCycle(board, move(pos, state), state)
+	return detectCycle(board, move(pos, direction), direction)
 }
 
 func testCycle() {
@@ -241,6 +245,7 @@ func testCycle() {
 func p2() {
 	initialBoard, initialPos := getBoard()
 
+	// it's only worth trying new obstructions on coords which have been visited
 	var visited []Position
 	{
 		board := copyBoard(initialBoard)
@@ -261,7 +266,6 @@ func p2() {
 		var boardPrint Board
 		if shouldPrintBoard {
 			boardPrint = copyBoard(newBoard)
-			boardPrint[initialPos.y][initialPos.x] = CurrentPos
 		}
 
 		if detectCycle(newBoard, initialPos, Up) {
