@@ -1,7 +1,9 @@
 package main
 
-import "advent/advent8"
+import (
+	"advent/advent12"
+)
 
 func main() {
-	advent8.P2()
+	advent12.P2()
 }
