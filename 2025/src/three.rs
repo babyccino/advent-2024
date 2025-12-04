@@ -42,8 +42,12 @@ fn perms(left: usize, line: &str, total: u64) -> u64 {
     if left == 0 {
         return total;
     }
+    if left == line.len() {
+        return total + line.parse::<u64>().unwrap();
+    }
 
-    let first_slice = &line[..(line.len() - left + 1)];
+    let window_size = line.len() - left + 1;
+    let first_slice = &line[..window_size];
     let (curr, pos) = get(first_slice);
 
     let end_slice = &line[(pos + 1)..];
