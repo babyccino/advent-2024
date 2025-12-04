@@ -19,12 +19,10 @@ fn check_range(slice: &str) -> i64 {
     let dash = slice.find('-').unwrap();
     let start_slice = &slice[..dash];
     let Ok(start) = start_slice.parse::<i64>() else {
-        println!("failed parsing {start_slice}");
         panic!("failed parsing {start_slice}");
     };
     let end_slice = &slice[(dash + 1)..];
     let Ok(end) = end_slice.parse::<i64>() else {
-        println!("failed parsing {end_slice}");
         panic!("failed parsing {end_slice}");
     };
     (start..=end).fold(0, |total, num| total + check_num(num))
