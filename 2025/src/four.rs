@@ -10,7 +10,7 @@ use crate::util::{double_iter, moore, Point};
 enum Mask {
     Empty = 0x0,
     Paper = 0x1,
-    Access = 0x10,
+    Access = 0x11,
 }
 
 impl Mask {
@@ -59,31 +59,25 @@ impl Arr {
     }
 
     fn access_total(&self) -> u32 {
-        double_iter(0..self.dim.x, 0..self.dim.y)
-            .into_iter()
-            .fold(0, |total, (x, y)| {
-                total + (self.get_at(x, y).has_paper() && self.can_place_at(x, y)) as u32
-            })
+        double_iter(0..self.dim.x, 0..self.dim.y).fold(0, |total, (x, y)| {
+            total + (self.get_at(x, y).has_paper() && self.can_place_at(x, y)) as u32
+        })
     }
 
     fn access_total_removing(self) -> u32 {
         self.access_total_removing_inner(0)
     }
     fn access_total_removing_inner(mut self, total: u32) -> u32 {
-        let curr =
-            double_iter(0..self.dim.x, 0..self.dim.y)
-                .into_iter()
-                .fold(0, |total, (x, y)| {
-                    let res = self.get_at(x, y).has_paper() && self.can_place_at(x, y);
-                    if res {
-                        let index = self.index(x, y);
-                        self.data[index] = Mask::Access;
-                    }
-                    total + res as u32
-                });
+        let curr = double_iter(0..self.dim.x, 0..self.dim.y).fold(0, |total, (x, y)| {
+            let res = self.get_at(x, y).has_paper() && self.can_place_at(x, y);
+            if res {
+                let index = self.index(x, y);
+                self.data[index] = Mask::Access;
+            }
+            total + res as u32
+        });
 
         if curr == 0 {
-            println!("finished!");
             return total;
         }
 
@@ -93,9 +87,6 @@ impl Arr {
                 Mask::Paper => Mask::Paper,
             }
         }
-
-        println!("\n\n\n\n\nremoved {curr}");
-        println!("{self}");
 
         let ten_millis = time::Duration::from_millis(100);
         thread::sleep(ten_millis);

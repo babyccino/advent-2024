@@ -1,3 +1,5 @@
+use std::ops::{Add, Rem};
+
 #[derive(Debug, Copy, Clone)]
 pub struct Point {
     pub x: usize,
@@ -52,4 +54,8 @@ pub fn moore(pos: Point, dim: Point) -> impl Iterator<Item = Point> {
             None
         }
     })
+}
+
+pub fn real_mod<T: Rem<Output = T> + Add<Output = T> + Copy>(l: T, r: T) -> T {
+    (l % r + r) % r
 }
