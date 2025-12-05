@@ -3,42 +3,55 @@ use std::fs::File;
 use std::io::{prelude::BufRead, BufReader};
 use std::ops::Range;
 
+fn line_to_range(line: String) -> Range<usize> {
+    let dash_index = line.find('-').unwrap();
+    let first = line[..dash_index].parse::<usize>().unwrap();
+    let second = line[(dash_index + 1)..].parse::<usize>().unwrap();
+    first..second
+}
+
+fn order_ranges(a: &Range<usize>, b: &Range<usize>) -> Ordering {
+    let ord = a.start.cmp(&b.start);
+    if ord == Ordering::Equal {
+        a.end.cmp(&b.end)
+    } else {
+        ord
+    }
+}
+
+fn get_ranges_only(file_path: &str) -> Vec<Range<usize>> {
+    let file = File::open(file_path).unwrap();
+    let reader = BufReader::new(file);
+
+    let mut ranges = reader
+        .lines()
+        .map(|line| line.unwrap())
+        .take_while(|line| !line.trim().is_empty())
+        .map(line_to_range)
+        .collect::<Vec<_>>();
+
+    ranges.sort_unstable_by(order_ranges);
+
+    ranges
+}
+
 fn get_data(file_path: &str) -> (Vec<Range<usize>>, Vec<usize>) {
     let file = File::open(file_path).unwrap();
     let reader = BufReader::new(file);
 
-    let init = (Vec::new(), Vec::new());
-    let (mut ranges, mut data) =
-        reader
-            .lines()
-            .map(|line| line.unwrap())
-            .fold(init, |(mut ranges, mut data), line| {
-                let line = line.trim();
+    let mut lines = reader.lines().map(|line| line.unwrap());
+    let mut ranges = lines
+        .by_ref()
+        .take_while(|line| !line.trim().is_empty())
+        .map(line_to_range)
+        .collect::<Vec<_>>();
+    let mut data = lines
+        .by_ref()
+        .take_while(|line| !line.trim().is_empty())
+        .map(|line| line.parse::<usize>().unwrap())
+        .collect::<Vec<_>>();
 
-                if line.is_empty() {
-                    return (ranges, data);
-                }
-
-                let dash_index = line.find('-');
-                if let Some(dash_index) = dash_index {
-                    let first = line[..dash_index].parse::<usize>().unwrap();
-                    let second = line[(dash_index + 1)..].parse::<usize>().unwrap();
-                    ranges.push(first..second);
-                } else {
-                    data.push(line.parse::<usize>().unwrap())
-                }
-
-                (ranges, data)
-            });
-
-    ranges.sort_unstable_by(|a, b| {
-        let ord = a.start.cmp(&b.start);
-        if ord == Ordering::Equal {
-            a.end.cmp(&b.end)
-        } else {
-            ord
-        }
-    });
+    ranges.sort_unstable_by(order_ranges);
 
     data.sort();
 
@@ -59,7 +72,8 @@ fn remove_overlaps(mut vec: Vec<Range<usize>>) -> Vec<Range<usize>> {
             continue;
         }
 
-        vec[i] = curr.start..max(curr.end, next.end);
+        let end = max(curr.end, next.end);
+        vec[i] = curr.start..end;
 
         vec.remove(i + 1);
     }
@@ -94,7 +108,7 @@ pub fn part_one() -> u64 {
 }
 
 pub fn part_two() -> u64 {
-    let (ranges, _) = get_data("./input/five/big.txt");
+    let ranges = get_ranges_only("./input/five/big.txt");
     let ranges = remove_overlaps(ranges);
     return ranges
         .into_iter()
