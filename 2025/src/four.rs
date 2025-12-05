@@ -1,8 +1,6 @@
-use std::cmp::{max, min};
 use std::fmt::{Display, Formatter, Result};
 use std::fs::File;
 use std::io::{prelude::BufRead, BufReader};
-use std::ops::Range;
 use std::{thread, time};
 
 use crate::util::{double_iter, moore, Point};
@@ -49,24 +47,6 @@ impl Arr {
         self.data[self.index(point.x, point.y)]
     }
 
-    fn get_at_range(&self, x: Range<usize>, y: usize) -> &[Mask] {
-        &self.data[self.index(x.start, y)..self.index(x.end, y)]
-    }
-    fn get_at_range_clamped(&self, x: Range<isize>, y: usize) -> &[Mask] {
-        if x.end < 0 {
-            panic!("clamped range end les than 0!");
-        }
-
-        let start = max(0, x.start) as usize;
-        let end = min(x.end as usize, self.dim.x);
-
-        self.get_at_range(start..end, y)
-    }
-
-    fn dim(&self) -> Point {
-        self.dim
-    }
-
     fn paper_around(&self, x: usize, y: usize) -> u32 {
         moore(Point { x, y }, self.dim).fold(0, |total, point| {
             self.get_at_point(point).has_paper() as u32 + total
@@ -84,21 +64,6 @@ impl Arr {
             .fold(0, |total, (x, y)| {
                 total + (self.get_at(x, y).has_paper() && self.can_place_at(x, y)) as u32
             })
-    }
-
-    fn access_total_mut(mut self) -> u32 {
-        let res = double_iter(0..self.dim.x, 0..self.dim.y)
-            .into_iter()
-            .fold(0, |total, (x, y)| {
-                let res = self.can_place_at(x, y);
-                let res = res && self.get_at(x, y).has_paper();
-                if res {
-                    let index = self.index(x, y);
-                    self.data[index] = Mask::Access
-                }
-                total + res as u32
-            });
-        res
     }
 
     fn access_total_removing(self) -> u32 {

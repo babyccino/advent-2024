@@ -2,7 +2,6 @@ use std::fs::File;
 use std::io::{prelude::BufRead, BufReader};
 
 fn get(line: &str) -> (u8, usize) {
-    // dbg!(line);
     let mut max = 1;
     let mut pos = 0;
     for (i, c) in line.char_indices() {
@@ -52,7 +51,6 @@ fn perms(left: usize, line: &str, total: u64) -> u64 {
 
     let end_slice = &line[(pos + 1)..];
     let curr_exp = (curr as u64) * (10 as u64).pow(left as u32 - 1);
-    // println!("curr: {curr}, pos: {pos}, lef: {left}, line: {line}, slice: {slice}");
 
     perms(left - 1, end_slice, total + curr_exp)
 }

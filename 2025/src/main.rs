@@ -5,9 +5,11 @@ mod three;
 mod two;
 pub mod util;
 
-use crate::five::{part_one, part_two};
+use crate::two::{part_one, part_two};
 
 fn main() {
-    println!("day one, p1: {}", part_one());
-    println!("day one, p2: {}", part_two());
+    for _ in 0..10 {
+        println!("day one, p1: {} should be 13108371860", part_one());
+        println!("day one, p2: {} shoudl be 22471660255", part_two());
+    }
 }
