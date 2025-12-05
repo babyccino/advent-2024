@@ -1,16 +1,16 @@
-use std::cmp::{max, Ordering};
+use std::cmp::Ordering;
 use std::fs::File;
 use std::io::{prelude::BufRead, BufReader};
 use std::ops::Range;
 
-fn line_to_range(line: String) -> Range<usize> {
+fn line_to_range(line: String) -> Range<u64> {
     let dash_index = line.find('-').unwrap();
-    let first = line[..dash_index].parse::<usize>().unwrap();
-    let second = line[(dash_index + 1)..].parse::<usize>().unwrap();
+    let first = line[..dash_index].parse::<u64>().unwrap();
+    let second = line[(dash_index + 1)..].parse::<u64>().unwrap();
     first..second
 }
 
-fn order_ranges(a: &Range<usize>, b: &Range<usize>) -> Ordering {
+fn order_ranges(a: &Range<u64>, b: &Range<u64>) -> Ordering {
     let ord = a.start.cmp(&b.start);
     if ord == Ordering::Equal {
         a.end.cmp(&b.end)
@@ -19,23 +19,7 @@ fn order_ranges(a: &Range<usize>, b: &Range<usize>) -> Ordering {
     }
 }
 
-fn get_ranges_only(file_path: &str) -> Vec<Range<usize>> {
-    let file = File::open(file_path).unwrap();
-    let reader = BufReader::new(file);
-
-    let mut ranges = reader
-        .lines()
-        .map(|line| line.unwrap())
-        .take_while(|line| !line.trim().is_empty())
-        .map(line_to_range)
-        .collect::<Vec<_>>();
-
-    ranges.sort_unstable_by(order_ranges);
-
-    ranges
-}
-
-fn get_data(file_path: &str) -> (Vec<Range<usize>>, Vec<usize>) {
+pub fn get_data(file_path: &str) -> (Vec<Range<u64>>, Vec<u64>) {
     let file = File::open(file_path).unwrap();
     let reader = BufReader::new(file);
 
@@ -48,7 +32,7 @@ fn get_data(file_path: &str) -> (Vec<Range<usize>>, Vec<usize>) {
     let mut data = lines
         .by_ref()
         .take_while(|line| !line.trim().is_empty())
-        .map(|line| line.parse::<usize>().unwrap())
+        .map(|line| line.parse::<u64>().unwrap())
         .collect::<Vec<_>>();
 
     ranges.sort_unstable_by(order_ranges);
@@ -58,33 +42,10 @@ fn get_data(file_path: &str) -> (Vec<Range<usize>>, Vec<usize>) {
     (ranges, data)
 }
 
-fn remove_overlaps(mut vec: Vec<Range<usize>>) -> Vec<Range<usize>> {
-    if vec.len() == 1 {
-        return vec;
-    }
-
-    let mut i = 0;
-    while i + 1 < vec.len() {
-        let curr = &vec[i];
-        let next = &vec[i + 1];
-        if next.start > curr.end {
-            i += 1;
-            continue;
-        }
-
-        let end = max(curr.end, next.end);
-        vec[i] = curr.start..end;
-
-        vec.remove(i + 1);
-    }
-
-    vec
-}
-
-fn in_overlaps(ranges: &[Range<usize>], data: &[usize]) -> usize {
+fn in_overlaps(ranges: &[Range<u64>], data: &[u64]) -> u64 {
     in_overlaps_inner(ranges, data, 0)
 }
-fn in_overlaps_inner(ranges: &[Range<usize>], data: &[usize], total: usize) -> usize {
+fn in_overlaps_inner(ranges: &[Range<u64>], data: &[u64], total: u64) -> u64 {
     if data.len() == 0 || ranges.len() == 0 {
         return total;
     }
@@ -101,16 +62,32 @@ fn in_overlaps_inner(ranges: &[Range<usize>], data: &[usize], total: usize) -> u
     return in_overlaps_inner(ranges, &data[1..], total + 1);
 }
 
-pub fn part_one() -> u64 {
-    let (ranges, data) = get_data("./input/five/big.txt");
-    let ranges = remove_overlaps(ranges);
-    in_overlaps(&ranges, &data) as u64
+pub fn part_one(ranges: &[Range<u64>], data: &[u64]) -> u64 {
+    in_overlaps(ranges, data)
 }
 
-pub fn part_two() -> u64 {
-    let ranges = get_ranges_only("./input/five/big.txt");
-    let ranges = remove_overlaps(ranges);
-    return ranges
-        .into_iter()
-        .fold(0, |total, range| total + range.end - range.start + 1) as u64;
+pub fn part_two(ranges: &[Range<u64>]) -> u64 {
+    let first = ranges[0].end - ranges[0].start + 1;
+    let (rest, _) = ranges[1..]
+        .iter()
+        .fold((0, ranges[0].clone()), |(total, prev), curr| {
+            let curr_len = curr.end - curr.start + 1;
+
+            if curr.start > prev.end {
+                return (total + curr_len, curr.clone());
+            } else if curr.end <= prev.end {
+                return (total, prev);
+            }
+
+            let intersetion = prev.end - curr.start + 1;
+            (total + curr_len - intersetion, curr.clone())
+        });
+    first + rest
+}
+
+pub fn day_five() -> (u64, u64) {
+    let (ranges, data) = get_data("./input/five/big.txt");
+    let part_one = part_one(&ranges, &data);
+    let part_two = part_two(&ranges);
+    (part_one, part_two)
 }
