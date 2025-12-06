@@ -71,14 +71,32 @@ fn part_one_old(nums: &[u16], ops: &[Operation]) -> u64 {
     part_one(nums, ops)
 }
 
+fn get_operations(slice: &str) -> Vec<(Operation, usize)> {
+    get_operations_inner(slice, Vec::new())
+}
+fn get_operations_inner(slice: &str, mut ops: Vec<(Operation, usize)>) -> Vec<(Operation, usize)> {
+    let check = &['*', '+'][..];
+    let c = slice.chars().next().unwrap();
+
+    if let Some(index) = slice[1..].find(check) {
+        let index = index + 1;
+        ops.push((Operation::parse(c), index - 1));
+        get_operations_inner(&slice[index..], ops)
+    } else {
+        ops.push((Operation::parse(c), slice.len()));
+        ops
+    }
+}
+
 fn get_data_two(file_path: &str) -> (Vec<u8>, Vec<(Operation, usize)>, usize) {
     let file = File::open(file_path).unwrap();
     let reader = BufReader::new(file);
 
-    let lines = reader.lines().map(|line| line.unwrap());
-    let (nums, ops, line_len) = lines.take_while(|line| !line.trim().is_empty()).fold(
-        (Vec::new(), Vec::new(), 0),
-        |(mut nums, ops, _), line| {
+    let (nums, ops, line_len) = reader
+        .lines()
+        .map(|line| line.unwrap())
+        .take_while(|line| !line.trim().is_empty())
+        .fold((Vec::new(), Vec::new(), 0), |(mut nums, ops, _), line| {
             if line.find('*').is_none() && line.find('+').is_none() {
                 nums.extend(
                     line.chars()
@@ -87,24 +105,8 @@ fn get_data_two(file_path: &str) -> (Vec<u8>, Vec<(Operation, usize)>, usize) {
                 return (nums, ops, line.len());
             }
 
-            let check = &['*', '+'][..];
-            let mut slice = &line[..];
-            let mut ops = Vec::new();
-            loop {
-                let c = slice.chars().next().unwrap();
-                if let Some(index) = slice[1..].find(check) {
-                    let index = index + 1;
-                    ops.push((Operation::parse(c), index - 1));
-                    slice = &slice[index..];
-                } else {
-                    ops.push((Operation::parse(c), slice.len()));
-                    break;
-                }
-            }
-
-            (nums, ops, line.len())
-        },
-    );
+            (nums, get_operations(&line[..]), line.len())
+        });
 
     (nums, ops, line_len)
 }
