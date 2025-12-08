@@ -4,6 +4,8 @@ use std::{
     io::{BufRead, BufReader},
 };
 
+use crate::util::{get_next, next_iter, previous_iter};
+
 fn part_one() {
     let file = File::open("./input/seven/big.txt").unwrap();
     let reader = BufReader::new(file);
@@ -132,6 +134,76 @@ fn rec(paths: Vec<u64>, mut lines: impl Iterator<Item = String>) -> u64 {
     rec(new_paths, lines)
 }
 
+fn rec_fp_masturbation(paths: Vec<u64>, lines: impl Iterator<Item = String>) -> u64 {
+    let Some((line, new_lines)) = get_next(lines) else {
+        return paths.into_iter().fold(0, |total, curr| total + curr);
+    };
+
+    let beam_and_char = || paths.iter().zip(line.chars());
+
+    // dbg!(beam_and_char().collect::<Vec<_>>());
+
+    let previous_next = previous_iter(beam_and_char()).zip(next_iter(beam_and_char()));
+
+    fn map_tuple((beam, c): (&u64, char)) -> u64 {
+        if c == '^' {
+            *beam
+        } else {
+            0
+        }
+    }
+
+    // dbg!(map_tuple((&1, '^')));
+
+    let new_paths = beam_and_char()
+        .zip(previous_next)
+        .map(|((curr, c), (prev, next))| {
+            let ret = if c == '^' { 0 } else { *curr }
+                + prev.map_or(0, map_tuple)
+                + next.map_or(0, map_tuple);
+            // dbg!(curr, prev, next, ret);
+            ret
+        })
+        .collect::<Vec<_>>();
+
+    // dbg!(&new_paths);
+
+    rec(new_paths, new_lines)
+}
+
+fn rec_fp_masturbation_no_iter(paths: Vec<u64>, lines: impl Iterator<Item = String>) -> u64 {
+    let Some((line, new_lines)) = get_next(lines) else {
+        return paths.into_iter().sum();
+    };
+
+    let new_paths = paths
+        .iter()
+        .zip(line.chars())
+        .enumerate()
+        .map(|(i, (curr, c))| {
+            let mut ret = if c == '^' { 0 } else { *curr };
+            if i > 0 {
+                let i = i - 1;
+                ret += line
+                    .chars()
+                    .nth(i)
+                    .map_or(0, |c| if c == '^' { paths[i] } else { 0 });
+            }
+            if i < paths.len() - 1 {
+                let i = i + 1;
+                ret += line
+                    .chars()
+                    .nth(i)
+                    .map_or(0, |c| if c == '^' { paths[i] } else { 0 });
+            }
+            ret
+        })
+        .collect::<Vec<_>>();
+
+    // dbg!(&new_paths);
+
+    rec(new_paths, new_lines)
+}
 fn part_two() -> u64 {
     let file = File::open("./input/seven/big.txt").unwrap();
     let reader = BufReader::new(file);
@@ -147,10 +219,38 @@ fn part_two() -> u64 {
     rec(beams, iter)
 }
 
+fn part_two_fp() -> u64 {
+    let file = File::open("./input/seven/big.txt").unwrap();
+    let reader = BufReader::new(file);
+
+    let mut iter = reader.lines().step_by(2).map(|line| line.unwrap());
+    let line = iter.next().unwrap();
+    let len = line.len();
+
+    let pos = line.find('S').unwrap();
+    let mut beams = vec![0; len];
+    beams[pos] = 1;
+
+    rec_fp_masturbation(beams, iter)
+}
+
+fn part_two_fp_no_iter() -> u64 {
+    let file = File::open("./input/seven/big.txt").unwrap();
+    let reader = BufReader::new(file);
+
+    let mut iter = reader.lines().step_by(2).map(|line| line.unwrap());
+    let line = iter.next().unwrap();
+    let len = line.len();
+
+    let pos = line.find('S').unwrap();
+    let mut beams = vec![0; len];
+    beams[pos] = 1;
+
+    rec_fp_masturbation_no_iter(beams, iter)
+}
+
 pub fn day_seven() {
     use std::time::Instant;
-
-    let total = part_two_old();
 
     for _ in 0..100 {
         let old_total = part_two_old();
@@ -170,6 +270,41 @@ pub fn day_seven() {
     let total = part_two();
     let elapsed = now.elapsed();
 
-    println!("Elapsed: {:.2?}", elapsed);
+    println!("Elapsed not fp: {:.2?}", elapsed);
+    println!("{total}");
+
+    let now = Instant::now();
+    let total = part_two_fp();
+    let elapsed = now.elapsed();
+
+    println!("Elapsed fp: {:.2?}", elapsed);
+    println!("{total}");
+
+    let now = Instant::now();
+    let total = part_two_fp_no_iter();
+    let elapsed = now.elapsed();
+
+    println!("Elapsed fp no iter: {:.2?}", elapsed);
+    println!("{total}");
+
+    let now = Instant::now();
+    let total = part_two();
+    let elapsed = now.elapsed();
+
+    println!("Elapsed not fp: {:.2?}", elapsed);
+    println!("{total}");
+
+    let now = Instant::now();
+    let total = part_two_fp();
+    let elapsed = now.elapsed();
+
+    println!("Elapsed fp: {:.2?}", elapsed);
+    println!("{total}");
+
+    let now = Instant::now();
+    let total = part_two_fp_no_iter();
+    let elapsed = now.elapsed();
+
+    println!("Elapsed fp no iter: {:.2?}", elapsed);
     println!("{total}");
 }

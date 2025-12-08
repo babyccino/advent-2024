@@ -1,4 +1,8 @@
-use std::ops::{Add, Rem};
+use std::{
+    iter,
+    ops::{Add, Rem},
+    sync::mpsc::Iter,
+};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Point {
@@ -58,4 +62,18 @@ pub fn moore(pos: Point, dim: Point) -> impl Iterator<Item = Point> {
 
 pub fn real_mod<T: Rem<Output = T> + Add<Output = T> + Copy>(l: T, r: T) -> T {
     (l % r + r) % r
+}
+
+pub fn previous_iter<T>(iter: impl Iterator<Item = T>) -> impl Iterator<Item = Option<T>> {
+    iter::once(None).chain(iter.map(|el| Some(el)))
+}
+
+pub fn next_iter<T>(mut iter: impl Iterator<Item = T>) -> impl Iterator<Item = Option<T>> {
+    _ = iter.next();
+    iter.map(|el| Some(el)).chain(iter::once(None))
+}
+
+pub fn get_next<T, TIter: Iterator<Item = T>>(mut iter: TIter) -> Option<(T, TIter)> {
+    let next = iter.next();
+    next.map(|next| (next, iter))
 }
