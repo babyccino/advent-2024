@@ -10,8 +10,8 @@ mod three;
 mod two;
 pub mod util;
 
-use crate::nine::day_nine;
+use crate::eight::day_eight;
 
 fn main() {
-    day_nine();
+    day_eight();
 }

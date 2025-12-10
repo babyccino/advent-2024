@@ -148,7 +148,7 @@ fn part_two() -> usize {
 
     let mut groups = Vec::<Vec<Point3d>>::new();
 
-    let mut set: HashSet<Point3d, _> = points.iter().map(|el| *el).collect::<HashSet<Point3d>>();
+    let mut set: HashSet<&Point3d, _> = points.iter().collect::<HashSet<&Point3d>>();
 
     for Ans { p1, p2, dist } in std::iter::from_fn(move || distances2.pop()) {
         // dbg!(dist);
