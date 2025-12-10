@@ -1,9 +1,9 @@
 use std::fmt::{Display, Formatter, Result};
 use std::fs::File;
-use std::io::{prelude::BufRead, BufReader};
+use std::io::{BufReader, prelude::BufRead};
 use std::{thread, time};
 
-use crate::util::{double_iter, moore, Point};
+use crate::util::{Point, double_iter, moore};
 
 #[repr(u8)]
 #[derive(Debug, Copy, Clone)]
@@ -26,13 +26,15 @@ impl Mask {
     }
 }
 
+type Point2 = Point<usize>;
+
 struct Arr {
-    pub dim: Point,
+    pub dim: Point2,
     data: Vec<Mask>,
 }
 
 impl Arr {
-    fn new(dim: Point, data: Vec<Mask>) -> Self {
+    fn new(dim: Point2, data: Vec<Mask>) -> Self {
         Arr { dim, data }
     }
 
@@ -43,12 +45,12 @@ impl Arr {
     fn get_at(&self, x: usize, y: usize) -> Mask {
         self.data[self.index(x, y)]
     }
-    fn get_at_point(&self, point: Point) -> Mask {
+    fn get_at_point(&self, point: Point2) -> Mask {
         self.data[self.index(point.x, point.y)]
     }
 
     fn paper_around(&self, x: usize, y: usize) -> u32 {
-        moore(Point { x, y }, self.dim).fold(0, |total, point| {
+        moore(Point2 { x, y }, self.dim).fold(0, |total, point| {
             self.get_at_point(point).has_paper() as u32 + total
         })
     }
